@@ -3,9 +3,11 @@ use std::error::Error;
 
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    let contents = fs::read_to_string(config.file_path)?;
+    let file_contents = fs::read_to_string(config.file_path)?;
 
-    println!("With text:\n{contents}");
+    for line in search(&config.query, &file_contents) {
+        println!("Found line: \"{line}\"");
+    }
 
     Ok(())
 }
@@ -25,5 +27,34 @@ impl Config {
         let file_path = args[2].clone();
 
         Ok(Config { query, file_path })
+    }
+}
+
+pub fn search<'a>(query: &str, file_contents: &'a str) -> Vec<&'a str> {
+    let mut results = Vec::new();
+
+    for line in file_contents.lines() {
+        if line.contains(query) {
+            results.push(line);
+        }
+    }
+
+    results
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn one_result() {
+        let query = "duct";
+        let contents = "\
+Rust:
+safe, fast, productive.
+Pick three.";
+
+        assert_eq!(vec!["safe, fast, productive."], search(query, contents));
     }
 }
